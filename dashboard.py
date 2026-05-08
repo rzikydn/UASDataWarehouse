@@ -134,21 +134,47 @@ df = load_data()
 # ============================================
 with st.sidebar:
     st.markdown("""
-    <div style="font-size: 20px; font-weight: 800; color: #208b73; margin-bottom: 24px; display: flex; align-items: center; gap: 10px;">
-        <div style="background-color: #208b73; color: white; border-radius: 6px; padding: 2px 8px;">🛒</div>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <div style="font-family: 'Orbitron', sans-serif; font-size: 22px; color: #1e293b; margin-bottom: 20px; margin-top: -7px; font-weight: 400;">
         Olist Dashboard
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("##### 🎛️ Filters")
+    st.markdown("##### Filters")
     years = sorted(df['purchase_year'].dropna().unique().astype(int))
-    sel_years = st.multiselect("📅 Tahun", years) # Removed default to save vertical space
+    sel_years = st.multiselect("Years", years) # Removed default to save vertical space
 
     quarters = sorted(df['purchase_quarter'].dropna().unique().astype(int))
-    sel_quarters = st.multiselect("📊 Kuartal", quarters) # Removed default
+    sel_quarters = st.multiselect("Quarter", quarters) # Removed default
 
+    STATE_MAP = {
+        'SP': 'SP: São Paulo', 'RJ': 'RJ: Rio de Janeiro', 'MG': 'MG: Minas Gerais', 'ES': 'ES: Espírito Santo',
+        'PR': 'PR: Paraná', 'RS': 'RS: Rio Grande do Sul', 'SC': 'SC: Santa Catarina',
+        'BA': 'BA: Bahia', 'CE': 'CE: Ceará', 'PE': 'PE: Pernambuco', 'MA': 'MA: Maranhão',
+        'PB': 'PB: Paraíba', 'RN': 'RN: Rio Grande do Norte', 'AL': 'AL: Alagoas', 'PI': 'PI: Piauí', 'SE': 'SE: Sergipe',
+        'DF': 'DF: Distrito Federal', 'GO': 'GO: Goiás', 'MT': 'MT: Mato Grosso', 'MS': 'MS: Mato Grosso do Sul',
+        'PA': 'PA: Pará', 'AM': 'AM: Amazonas', 'RO': 'RO: Rondônia', 'TO': 'TO: Tocantins',
+        'AC': 'AC: Acre', 'AP': 'AP: Amapá', 'RR': 'RR: Roraima'
+    }
     states = sorted(df['customer_state'].dropna().unique())
-    sel_states = st.multiselect("📍 State Customer", states) # Removed default
+    sel_states = st.multiselect(
+        "State Customer", 
+        states, 
+        format_func=lambda x: STATE_MAP.get(x, x),
+        help="Filter the data based on the customer's delivery state."
+    )
+    st.markdown("""
+    <div style='background-color: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 15px;'>
+        <div style='font-size: 12px; color: #1e293b; line-height: 1.5;'>
+            <div style='margin-bottom: 6px;'><span style='font-size: 14px;'></span> <b>About the Dataset:</b></div>
+            This dashboard utilizes the <b>Brazilian E-Commerce Public Dataset by Olist</b>, containing over 100,000 anonymized orders made at multiple marketplaces in Brazil from 2016 to 2018.
+            <br><br>
+            It offers a comprehensive view of the e-commerce landscape, including order status, pricing, payment methods, freight performance, customer locations, and product attributes—providing valuable insights into customer purchasing behavior and regional sales distribution.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Filter Data (If empty, show all)
 mask = pd.Series(True, index=df.index)
@@ -163,7 +189,10 @@ fdf = df[mask].copy()
 # ============================================
 # TOP HEADER
 # ============================================
-st.markdown("<h3 style='margin: 0; padding-bottom: 8px; color: #1e293b;'>Overview</h3>", unsafe_allow_html=True)
+st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+<h3 style="font-family: 'Orbitron', sans-serif; font-weight: 400; margin: 0; padding-bottom: 6px; color: #1e293b;">Overview</h3>
+""", unsafe_allow_html=True)
 
 # ============================================
 # ROW 1: KPIs
@@ -227,7 +256,7 @@ with r2c1:
     
     fig.update_layout(**base_layout(height=260, title_text="Revenue Over Time", margin=dict(l=10, r=10, t=50, b=10)),
                       title_x=0.02, title_y=0.93,
-                      legend=dict(orientation="h", yanchor="top", y=1.1, xanchor="left", x=-0.035, font=dict(color=C_DARK, size=11)),
+                      legend=dict(orientation="h", yanchor="top", y=1.3, xanchor="left", x=0.70, font=dict(color=C_DARK, size=11)),
                       showlegend=True)
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
@@ -243,9 +272,14 @@ with r2c2:
     
     for _, row in tcs.iterrows():
         pct = int((row['order_id'] / max_order) * 100) if max_order else 0
+        state = row['customer_state']
+        flag_url = f"https://raw.githubusercontent.com/vasfvitor/bandeiras/master/public/states/{state}-bandeira.svg"
         html_str += f"""
 <div style='display: flex; align-items: center; justify-content: space-between;'>
-<div style='width: 30px; font-weight: 600; color: {C_DARK}; font-size: 13px;'>{row['customer_state']}</div>
+<div style='display: flex; align-items: center; width: 65px;'>
+<img src="{flag_url}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid #e2e8f0; margin-right: 8px;">
+<div style='font-weight: 600; color: {C_DARK}; font-size: 13px;'>{state}</div>
+</div>
 <div style='flex-grow: 1; margin: 0 12px; background: #f0f2f5; height: 6px; border-radius: 3px;'>
 <div style='background: {C_GREEN}; height: 100%; border-radius: 3px; width: {pct}%;'></div>
 </div>
@@ -279,14 +313,35 @@ with r3c1:
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 with r3c2:
-    pay_dist = fdf.groupby('main_payment_type')['order_id'].nunique().reset_index()
+    pay_dist = fdf.groupby('main_payment_type')['order_id'].nunique().nlargest(4).reset_index()
+    total_orders_pay = pay_dist['order_id'].sum()
+    colors = [C_DARK, C_GREEN, C_ORANGE, '#4facfe']
+    
     fig = go.Figure(go.Pie(
-        labels=pay_dist['main_payment_type'], values=pay_dist['order_id'], hole=0.6,
-        marker=dict(colors=[C_DARK, C_GREEN, C_ORANGE, '#4facfe']),
-        textinfo='percent', textposition='inside', textfont=dict(size=11, color='white')
+        labels=pay_dist['main_payment_type'], values=pay_dist['order_id'], 
+        hole=0.75, domain=dict(x=[0, 0.45], y=[0, 1]),
+        marker=dict(colors=colors),
+        textinfo='none', hoverinfo='label+percent',
+        title=dict(text=f"Total<br><b>{total_orders_pay:,}</b>", font=dict(size=14, color=C_DARK))
     ))
-    fig.update_layout(**base_layout(height=230, title_text="Sales by e-commerce platform", margin=dict(l=10, r=10, t=50, b=20)),
-                      legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5, font=dict(size=10)))
+    
+    y_start = 0.85
+    y_step = 0.23
+    
+    for i, row in enumerate(pay_dist.itertuples()):
+        color = colors[i % len(colors)]
+        label = row.main_payment_type
+        pct = (row.order_id / total_orders_pay * 100) if total_orders_pay else 0
+        y_pos = y_start - (i * y_step)
+        
+        fig.add_annotation(x=0.50, y=y_pos, text="■", showarrow=False, xanchor="left", font=dict(size=15, color=color), xref="paper", yref="paper")
+        fig.add_annotation(x=0.55, y=y_pos, text=label, showarrow=False, xanchor="left", font=dict(size=11, color=C_DARK), xref="paper", yref="paper")
+        fig.add_annotation(x=1.0, y=y_pos, text=f"<b>{pct:.1f}%</b>", showarrow=False, xanchor="right", font=dict(size=11, color=C_DARK), xref="paper", yref="paper")
+        
+        if i < len(pay_dist) - 1:
+            fig.add_shape(type="line", x0=0.50, y0=y_pos - (y_step/2), x1=1.0, y1=y_pos - (y_step/2), line=dict(color="#e2e8f0", width=1, dash="dot"), xref="paper", yref="paper")
+            
+    fig.update_layout(**base_layout(height=230, title_text="Sales by e-commerce platform", margin=dict(l=10, r=10, t=50, b=20)), showlegend=False)
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 with r3c3:
@@ -295,21 +350,21 @@ with r3c3:
     total_rev_cnt = fdf[fdf['avg_review_score'].notna()]['order_id'].nunique()
     
     fig = go.Figure(go.Indicator(
-        mode = "gauge+number",
+        mode = "gauge",
         value = avg_score,
-        number = {'font': {'size': 32, 'color': C_DARK}, 'valueformat': '.2f'},
-        domain = {'x': [0, 1], 'y': [0, 1]},
+        domain = {'x': [0.15, 0.85], 'y': [0.35, 1.0]},
         gauge = {
             'axis': {'range': [None, 5], 'visible': False},
-            'bar': {'color': C_GREEN, 'thickness': 0.75},
+            'bar': {'color': C_GREEN, 'thickness': 0.85},
             'bgcolor': '#f0f2f5',
             'borderwidth': 0,
         }
     ))
     
     # Custom annotations inside chart to save space
-    fig.add_annotation(x=0.2, y=-0.1, text="<b>1</b><br>Lowest", showarrow=False, font=dict(size=11, color=C_GRAY))
-    fig.add_annotation(x=0.8, y=-0.1, text="<b>5</b><br>Highest", showarrow=False, font=dict(size=11, color=C_GRAY))
+    fig.add_annotation(x=0.5, y=0.3, text=f"<b>{avg_score:.2f}</b>", showarrow=False, font=dict(size=36, color=C_DARK), xref="paper", yref="paper", xanchor="center")
+    fig.add_annotation(x=0.15, y=0.15, text="<b>1</b><br>Lowest", showarrow=False, font=dict(size=12, color=C_GRAY))
+    fig.add_annotation(x=0.85, y=0.15, text="<b>5</b><br>Highest", showarrow=False, font=dict(size=12, color=C_GRAY))
     
     fig.update_layout(**base_layout(height=230, title_text="Review Scores", margin=dict(l=10, r=10, t=60, b=20)))
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})

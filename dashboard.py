@@ -21,15 +21,20 @@ st.markdown("""
 <style>
 /* Reset padding to maximize screen space */
 .block-container {
-    padding-top: 1.5rem !important;
+    padding-top: 2.5rem !important;
     margin-top: 0rem !important;
-    padding-bottom: 0rem !important;
+    padding-bottom: 4rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
     max-width: 100%;
 }
-/* Hide Streamlit toolbar (deploy & menu) to avoid overlap when moving content up */
-[data-testid="stToolbar"] {visibility: hidden;}
+/* Ensure collapsed control is always on top and visible */
+[data-testid="collapsedControl"] {
+    z-index: 999999 !important;
+    visibility: visible !important;
+}
+/* Make header transparent so it doesn't cut off content */
+header {background-color: transparent !important;}
 /* Hide Streamlit footer */
 footer {visibility: hidden;}
 
@@ -104,7 +109,7 @@ def base_layout(height=200, title_text="", subtitle_text="", **extra):
     layout = dict(
         paper_bgcolor='#ffffff', plot_bgcolor='#ffffff',
         font=dict(family='sans-serif', color='#8c94a3', size=11),
-        margin=dict(l=10, r=10, t=50 if title_text else 10, b=10),
+        margin=dict(l=10, r=10, t=50 if title_text else 10, b=20),
         xaxis=dict(gridcolor='#f0f2f5', zerolinecolor='#f0f2f5'),
         yaxis=dict(gridcolor='#f0f2f5', zerolinecolor='#f0f2f5'),
         height=height,
@@ -168,7 +173,7 @@ total_orders = fdf['order_id'].nunique()
 total_cust = fdf['customer_unique_id'].nunique()
 aov = total_rev / total_orders if total_orders else 0
 
-c1, c2, c3, c4 = st.columns(4, gap="large")
+c1, c2, c3, c4 = st.columns(4, gap="small")
 with c1:
     st.markdown(f"""
 <div class="kpi-card">
@@ -203,7 +208,7 @@ with c4:
 # ============================================
 # ROW 2: Main Chart + Side List
 # ============================================
-r2c1, r2c2 = st.columns([7, 3], gap="large")
+r2c1, r2c2 = st.columns([2, 1], gap="small")
 
 with r2c1:
     mr = fdf.groupby(fdf['purchase_date'].dt.to_period('M'))['allocated_payment_value'].sum().reset_index()
@@ -221,7 +226,8 @@ with r2c1:
     ))
     
     fig.update_layout(**base_layout(height=260, title_text="Revenue Over Time", margin=dict(l=10, r=10, t=50, b=10)),
-                      legend=dict(orientation="h", yanchor="bottom", y=0.98, xanchor="left", x=0.03, font=dict(color=C_DARK, size=11)),
+                      title_x=0.02, title_y=0.93,
+                      legend=dict(orientation="h", yanchor="top", y=1.1, xanchor="left", x=-0.035, font=dict(color=C_DARK, size=11)),
                       showlegend=True)
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
@@ -253,7 +259,7 @@ with r2c2:
 # ============================================
 # ROW 3: 3 Charts
 # ============================================
-r3c1, r3c2, r3c3 = st.columns(3, gap="large")
+r3c1, r3c2, r3c3 = st.columns(3, gap="small")
 
 with r3c1:
     tc = fdf.groupby('product_category_name_english')['allocated_payment_value'].sum().nlargest(6).reset_index()
@@ -265,7 +271,7 @@ with r3c1:
         line=dict(color=C_GREEN, width=2),
         marker=dict(color=C_GREEN, size=6)
     ))
-    fig.update_layout(**base_layout(height=230, title_text="Sales by Region", margin=dict(l=30, r=30, t=50, b=10)),
+    fig.update_layout(**base_layout(height=230, title_text="Sales by Region", margin=dict(l=30, r=30, t=50, b=20)),
                       polar=dict(
                           radialaxis=dict(visible=False),
                           angularaxis=dict(tickfont=dict(size=10, color=C_GRAY))
@@ -279,7 +285,7 @@ with r3c2:
         marker=dict(colors=[C_DARK, C_GREEN, C_ORANGE, '#4facfe']),
         textinfo='percent', textposition='inside', textfont=dict(size=11, color='white')
     ))
-    fig.update_layout(**base_layout(height=230, title_text="Sales by e-commerce platform", margin=dict(l=10, r=10, t=50, b=10)),
+    fig.update_layout(**base_layout(height=230, title_text="Sales by e-commerce platform", margin=dict(l=10, r=10, t=50, b=20)),
                       legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5, font=dict(size=10)))
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
@@ -305,5 +311,5 @@ with r3c3:
     fig.add_annotation(x=0.2, y=-0.1, text="<b>1</b><br>Lowest", showarrow=False, font=dict(size=11, color=C_GRAY))
     fig.add_annotation(x=0.8, y=-0.1, text="<b>5</b><br>Highest", showarrow=False, font=dict(size=11, color=C_GRAY))
     
-    fig.update_layout(**base_layout(height=230, title_text="Review Scores", subtitle_text="an overview of your users", margin=dict(l=10, r=10, t=60, b=10)))
+    fig.update_layout(**base_layout(height=230, title_text="Review Scores", margin=dict(l=10, r=10, t=60, b=20)))
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})

@@ -347,24 +347,30 @@ with r3c2:
 with r3c3:
     avg_score = fdf['avg_review_score'].mean()
     if pd.isna(avg_score): avg_score = 0
-    total_rev_cnt = fdf[fdf['avg_review_score'].notna()]['order_id'].nunique()
     
-    fig = go.Figure(go.Indicator(
-        mode = "gauge",
-        value = avg_score,
-        domain = {'x': [0.15, 0.85], 'y': [0.35, 1.0]},
-        gauge = {
-            'axis': {'range': [None, 5], 'visible': False},
-            'bar': {'color': C_GREEN, 'thickness': 0.85},
-            'bgcolor': '#f0f2f5',
-            'borderwidth': 0,
-        }
+    rs_data = fdf['avg_review_score'].dropna().round().astype(int).value_counts().reset_index()
+    rs_data.columns = ['Score', 'Count']
+    all_scores = pd.DataFrame({'Score': [1, 2, 3, 4, 5]})
+    rs_dist = pd.merge(all_scores, rs_data, on='Score', how='left').fillna(0)
+    rs_dist['ScoreLabel'] = rs_dist['Score'].astype(str) + ' ★'
+    
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=rs_dist['ScoreLabel'],
+        y=rs_dist['Count'],
+        marker_color=C_GREEN,
+        text=rs_dist['Count'].apply(lambda x: f"{int(x):,}"),
+        textposition='outside',
+        textfont=dict(size=10, color=C_DARK)
     ))
     
-    # Custom annotations inside chart to save space
-    fig.add_annotation(x=0.5, y=0.3, text=f"<b>{avg_score:.2f}</b>", showarrow=False, font=dict(size=36, color=C_DARK), xref="paper", yref="paper", xanchor="center")
-    fig.add_annotation(x=0.15, y=0.15, text="<b>1</b><br>Lowest", showarrow=False, font=dict(size=12, color=C_GRAY))
-    fig.add_annotation(x=0.85, y=0.15, text="<b>5</b><br>Highest", showarrow=False, font=dict(size=12, color=C_GRAY))
+    fig.update_layout(**base_layout(height=230, title_text=f"Review Scores (Avg: {avg_score:.2f})", margin=dict(l=10, r=10, t=50, b=20),
+                                    xaxis=dict(showgrid=False, tickfont=dict(size=11, color=C_GRAY)),
+                                    yaxis=dict(showgrid=False, showticklabels=False),
+                                    plot_bgcolor='white', paper_bgcolor='white'))
     
-    fig.update_layout(**base_layout(height=230, title_text="Review Scores", margin=dict(l=10, r=10, t=60, b=20)))
+    max_val = rs_dist['Count'].max()
+    if max_val > 0:
+        fig.update_yaxes(range=[0, max_val * 1.25])
+        
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})

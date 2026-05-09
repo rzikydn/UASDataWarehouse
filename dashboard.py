@@ -52,6 +52,7 @@ footer {visibility: hidden;}
     font-size: 13px;
     font-weight: 500;
     margin-bottom: 8px;
+    text-transform: uppercase;
 }
 .kpi-value {
     color: #1e293b;
@@ -124,7 +125,7 @@ C_DARK = '#1e293b'
 C_GRAY = '#8c94a3'
 
 def base_layout(height=200, title_text="", subtitle_text="", **extra):
-    title_html = f"<b>{title_text}</b>"
+    title_html = f"<b style='text-transform: uppercase;'>{title_text}</b>"
     if subtitle_text:
         title_html += f"<br><span style='font-size:11px;color:{C_GRAY};font-weight:normal;'>{subtitle_text}</span>"
         
@@ -249,6 +250,11 @@ total_orders = fdf['order_id'].nunique()
 late_delivery_rate = fdf['is_late_delivery'].mean() * 100 if not fdf.empty else 0
 avg_review_score = fdf['avg_review_score'].mean() if not fdf.empty else 0
 avg_delay = fdf['carrier_handling_days'].mean() if not fdf.empty else 0
+if pd.isna(avg_delay):
+    avg_delay = 0
+d_days = int(avg_delay)
+d_hours = int(round((avg_delay - d_days) * 24))
+avg_delay_str = f"{d_days} Days {d_hours} Hrs".upper()
 
 prev_orders = prev_fdf['order_id'].nunique() if not prev_fdf.empty else 0
 prev_late_rate = prev_fdf['is_late_delivery'].mean() * 100 if not prev_fdf.empty else 0
@@ -290,8 +296,8 @@ with c2:
 with c3:
     st.markdown(f"""
 <div class="kpi-card">
-<div class="kpi-title">Avg delay (days)</div>
-<div class="kpi-value">{avg_delay:.1f}</div>
+<div class="kpi-title">Avg delay</div>
+<div class="kpi-value" style="font-size: 20px;">{avg_delay_str}</div>
 {get_trend_html(avg_delay, prev_delay)}
 </div>""", unsafe_allow_html=True)
 with c4:
@@ -366,7 +372,7 @@ with r2c2:
         textfont=dict(size=10, color=C_DARK)
     ))
     
-    fig.update_layout(**base_layout(height=260, title_text="Review Score vs Delivery", margin=dict(l=10, r=10, t=50, b=20),
+    fig.update_layout(**base_layout(height=260, title_text="Review Score", margin=dict(l=10, r=10, t=50, b=20),
                                     xaxis=dict(showgrid=False, tickfont=dict(size=11, color=C_GRAY)),
                                     yaxis=dict(showgrid=False, showticklabels=False),
                                     plot_bgcolor='white', paper_bgcolor='white'))
@@ -456,7 +462,7 @@ with r3c2:
             connectgaps=False, hovertemplate="<b>%{x}</b><br>Late Rate: %{y:.1f}%<extra></extra>"
         ))
     
-    fig.update_layout(**base_layout(height=230, title_text="Trend Late Delivery per Bulan", margin=dict(l=10, r=10, t=50, b=10)),
+    fig.update_layout(**base_layout(height=230, title_text="Trend Late Delivery by month", margin=dict(l=10, r=10, t=50, b=10)),
                       legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5, font=dict(size=10, color=C_DARK)),
                       showlegend=True, hovermode="x unified")
     
@@ -479,9 +485,9 @@ with r3c3:
     max_rate = tcs['late_rate'].max() if not tcs.empty else 0
     
     # Format HTML string WITHOUT indentation to prevent Streamlit parsing it as a Markdown code block
-    html_str = f"""<div class='kpi-card' style='height: 230px; overflow: hidden;'>
-<div class='kpi-title' style='color: {C_DARK}; font-size: 14px; font-weight: 700; margin-bottom: 16px;'>Late Delivery by State</div>
-<div style='display: flex; flex-direction: column; gap: 12px;'>"""
+    html_str = f"""<div class='kpi-card' style='height: 230px; overflow: hidden; padding-top: 10px; padding-bottom: 10px;'>
+<div class='kpi-title' style='color: {C_DARK}; font-size: 14px; font-weight: 700; margin-bottom: 12px;'>Late Delivery by State</div>
+<div style='display: flex; flex-direction: column; gap: 10px;'>"""
     
     state_names = {
         'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas',

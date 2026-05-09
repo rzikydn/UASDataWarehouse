@@ -9,7 +9,7 @@ import numpy as np
 # ============================================
 st.set_page_config(
     page_title="Olist Dashboard",
-    page_icon="🍃",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -297,15 +297,26 @@ r3c1, r3c2, r3c3 = st.columns(3, gap="small")
 
 with r3c1:
     tc = fdf.groupby('product_category_name_english')['allocated_payment_value'].sum().nlargest(6).reset_index()
+    
+    cat_map = {
+        'bed_bath_table': 'Bed & Bath',
+        'health_beauty': 'Health & Beauty',
+        'watches_gifts': 'Watches & Gifts',
+        'furniture_decor': 'Furniture',
+        'computers_accessories': 'Computers',
+        'sports_leisure': 'Sports'
+    }
+    tc['short_name'] = tc['product_category_name_english'].map(lambda x: cat_map.get(x, str(x).replace('_', ' ').title()[:15]))
+
     fig = go.Figure(data=go.Scatterpolar(
         r=tc['allocated_payment_value'],
-        theta=tc['product_category_name_english'].str[:12],
+        theta=tc['short_name'],
         fill='toself',
         fillcolor='rgba(32, 139, 115, 0.2)',
         line=dict(color=C_GREEN, width=2),
         marker=dict(color=C_GREEN, size=6)
     ))
-    fig.update_layout(**base_layout(height=230, title_text="Sales by Region", margin=dict(l=30, r=30, t=50, b=20)),
+    fig.update_layout(**base_layout(height=230, title_text="Sales by Top Category", margin=dict(l=30, r=30, t=50, b=20)),
                       polar=dict(
                           radialaxis=dict(visible=False),
                           angularaxis=dict(tickfont=dict(size=10, color=C_GRAY))
